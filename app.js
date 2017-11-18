@@ -1,25 +1,25 @@
-var netHashRate = hodlData.netHashRate;
-var reward = hodlData.reward;
-var currentBlock = hodlData.lastBlock;
-var exchangeHODLBTC = hodlData.exchangeHODLBTC;
-var exchangeBTCUSD = hodlData.exchangeBTCUSD;
-var exchangeHODLUSD =  exchangeHODLBTC * exchangeBTCUSD ;
+var netHashRate = roiData.netHashRate;
+var reward = roiData.reward;
+var currentBlock = roiData.lastBlock;
+var exchangeHODLBTC = roiData.exchangeHODLBTC;
+var exchangeBTCUSD = roiData.exchangeBTCUSD;
+var exchangeHODLUSD =  exchangeROIBTC * exchangeBTCUSD ;
 
 function updateReward() {
 		var dailyValue = ($("#userHash").val() * reward) / netHashRate;
 		var weeklyValue = dailyValue * 7;
 		var monthlyValue = dailyValue * 30;
-		$("#dailyEarnings").text("Earnings per day: " + dailyValue.toFixed(2) + " Hodl ($" + (dailyValue * exchangeHODLUSD).toFixed(2) +")");
-		$("#weeklyEarnings").text("Earnings per week: " + weeklyValue.toFixed(2) + " Hodl ($" + (weeklyValue * exchangeHODLUSD).toFixed(2) +")");
-		$("#monthlyEarnings").text("Earnings per month: " + monthlyValue.toFixed(2) + " Hodl ($" + (monthlyValue * exchangeHODLUSD).toFixed(2) +")");
+		$("#dailyEarnings").text("Earnings per day: " + dailyValue.toFixed(2) + " ROI ($" + (dailyValue * exchangeHODLUSD).toFixed(2) +")");
+		$("#weeklyEarnings").text("Earnings per week: " + weeklyValue.toFixed(2) + " ROI ($" + (weeklyValue * exchangeROIUSD).toFixed(2) +")");
+		$("#monthlyEarnings").text("Earnings per month: " + monthlyValue.toFixed(2) + " ROI ($" + (monthlyValue * exchangeROIUSD).toFixed(2) +")");
 }
 
 function updateScenario() {
 
 	// get term deposits formula for interest and scenario section. 
-	// https://bitcointalk.org/index.php?topic=1317918.0
-    var blockTime = 154; // in seconds
-    var blocksPerDay = (24*60*60) / 154; // 561.038961
+	// https://bitcointalk.org/index.php?topic=2361848.0
+    var blockTime = 120; // in seconds
+    var blocksPerDay = (24*60*60) / 120; // 720.00
 
 	var principal = $("#principal").val(); // initial investment, get from form
 	var term = $("#term").val(); // in days, get from form
@@ -27,25 +27,22 @@ function updateScenario() {
 	var blocksDuringTerm = blocksPerDay * term;
 
 	// compound interest forumla: A = P ( 1+r ) ^ t
-	var standardInterestRate = Math.pow(0.5,22); // (1/2^22) compounded every block	
+	var standardInterestRate = Math.pow(0.5,18); // (1/2^18) compounded every block	
 	var standardInterestDuringTerm = (principal * Math.pow(1 + standardInterestRate, blocksDuringTerm)) - principal;
 
 
 	// bonus interest
 	// Principal + (Standard Interest + (Bonus Interest * Bonus Multiplier))
-	//var bonusInterest; // Compounded, the rate is 2174%. It's reduced every block by a multiplier - calculated like this =((409530-X)/409530)^4 (X is the block where the balance is recorded as an output).
 	var maxBonusRate = Math.pow(0.5,16);
-	var bonusMultipler = Math.pow(((409530 - currentBlock) / 409530), 4);
-	var bonusInterestDuringTerm = (principal * Math.pow(1 + maxBonusRate * bonusMultipler, blocksDuringTerm)) - principal; 
+	var bonusInterestDuringTerm = (principal * Math.pow(1 + maxBonusRate, blocksDuringTerm)) - principal; 
 
-	// Full bonus on term is Principal + ((Standard Interest + (Bonus Interest * Bonus Multiplier))*Term Deposit Multiplier)
-	var termDepositMultipler = (1-((409530-blocksDuringTerm)/409530)^6)*100;  // (1-((409530-X)/409530)^6)*100  X is number of blocks to lock for, min 2 days, max 1 yearm
-	var effectiveBonus = (standardInterestDuringTerm + bonusInterestDuringTerm) * termDepositMultipler;
+	// Full bonus on term is Principal + ((Standard Interest + (Bonus Interest))
+	var effectiveBonus = (standardInterestDuringTerm + bonusInterestDuringTerm)
 	var depositInterestDuringTerm = effectiveBonus - standardInterestDuringTerm - bonusInterestDuringTerm;
 
 	var totalCoins = principal + effectiveBonus;
 	var futureValue = totalCoins * futureExchangeScenario;
-	var scenarioString = "Under this scenario you will have " + totalCoins + " Hodl with a total USD value of $" + futureValue;
+	var scenarioString = "Under this scenario you will have " + totalCoins + " ROI with a total USD value of $" + futureValue;
 
 	$("#scenario").html(scenarioString);
 
